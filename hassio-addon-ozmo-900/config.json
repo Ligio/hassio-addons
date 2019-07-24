@@ -1,0 +1,33 @@
+{
+  "name": "Vacuum: Ecovacs Deebot OZMO 900",
+  "version": "1.0",
+  "slug": "vacuum-ecovacs-deebot-ozmo-900",
+  "description": "Ecovacs Deebot OZMO 900 vacuum add-on!",
+  "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
+  "startup": "before",
+  "boot": "auto",
+  "options": {
+    "ecovacs": {
+        "email": "",
+        "password_hash": "",
+        "device_id": "",
+        "country": "it",
+        "continent": "eu",
+        "verify_ssl": "True"
+    },
+    "mqtt": {
+        "client_id": "deebot-900-client",
+        "broker_host": "",
+        "broker_port": "1883",
+        "username": "",
+        "password": "",
+        "command_topic": "/ecovacs-vacuum/command",
+        "send_command_topic": "/ecovacs-vacuum/custom-command",
+        "state_topic": "/ecovacs-vacuum/state"
+    }
+  },
+  "schema": {},
+  "ports": {
+    "1883/tcp": 1883
+  }
+}
