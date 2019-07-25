@@ -2,7 +2,6 @@
 #Controlling Ecovacs Deebot vaccum with sucks
 
 from sucks import *
-#from sucks.sucks import *
 import paho.mqtt.client as paho
 import json
 
@@ -105,7 +104,7 @@ class DeebotVacuum:
         api = EcoVacsAPI(config['device_id'], config['email'], config['password_hash'], config['country'], config['continent'])
 
         my_vac = api.devices()[0]
-        vacbot = VacBot(api.uid, api.REALM, api.resource, api.user_access_token, my_vac, config['continent'])
+        vacbot = VacBot(api.uid, api.REALM, api.resource, api.user_access_token, my_vac, config['continent'], monitor=True, verify_ssl=config['verify_ssl'])
         vacbot.connect_and_wait_until_ready()
 
         return vacbot
@@ -118,7 +117,7 @@ class DeebotVacuum:
         self.vacbot.errorEvents.subscribe(self._error_report)
 
         # For the first run, try to get & report all statuses
-        self.vacbot.request_all_statuses()
+        # self.vacbot.request_all_statuses()
 
     # Callback function for battery events
     def _battery_report(self, level):
@@ -134,6 +133,15 @@ class DeebotVacuum:
     # Callback function for battery events
     def _status_report(self, status):
         print("Updating status: " + str(status))
+
+        # State has to be one of vacuum states supported by Home Assistant:
+        #
+        #     cleaning,
+        #     docked,
+        #     paused,
+        #     idle,
+        #     returning,
+        #     error.
 
         battery_level = "0"
         if self.vacbot.battery_status != None:
