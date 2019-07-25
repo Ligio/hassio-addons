@@ -1,6 +1,6 @@
 {
   "name": "Vacuum: Ecovacs Deebot OZMO 900",
-  "version": "0.4",
+  "version": "0.5",
   "slug": "vacuum-ecovacs-deebot-ozmo-900",
   "description": "Ecovacs Deebot OZMO 900 vacuum add-on!",
   "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
@@ -26,7 +26,8 @@
         "state_topic": "/ecovacs-vacuum/state",
         "set_fan_speed_topic": "/ecovacs-vacuum/set-fan-speed",
         "json_attributes_topic": "/ecovacs-vacuum/state-attributes",
-        "error_topic": "/ecovacs-vacuum/errors"
+        "error_topic": "/ecovacs-vacuum/errors",
+        "availability_topic": "/ecovacs-vacuum/availability"
     }
   },
   "schema": {
@@ -49,7 +50,8 @@
         "state_topic": "str",
         "set_fan_speed_topic": "str",
         "json_attributes_topic": "str",
-        "error_topic": "str"
+        "error_topic": "str",
+        "availability_topic": "str"
     }
   }
 }
