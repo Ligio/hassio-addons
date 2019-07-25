@@ -199,7 +199,7 @@ class DeebotVacuum:
         del self.mqtt_client
 
 if __name__ == "__main__":
-    options_path = "/home/ligio/workspace/hassio-addons/hassio-addon-ozmo-900/options.json"
+    options_path = "/data/options.json"
     with open(options_path, encoding='utf-8') as options_file:
         config = json.load(options_file)
 
