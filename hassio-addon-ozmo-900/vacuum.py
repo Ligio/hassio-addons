@@ -125,7 +125,7 @@ class DeebotVacuum:
         print("Updating battery level: " + str(level * 100))
 
         status_report = {
-            "battery_level": str(level * 100),
+            "battery_level": int(level * 100),
             "state": self.vacbot.vacuum_status,
             "fan_speed": self.vacbot.fan_speed,
         }
@@ -140,7 +140,7 @@ class DeebotVacuum:
             battery_level = str(float(self.vacbot.battery_status) * 100)
 
         status_report = {
-            "battery_level": battery_level,
+            "battery_level": int(battery_level),
             "state": str(status),
             "fan_speed": self.vacbot.fan_speed,
         }
@@ -177,7 +177,7 @@ class DeebotVacuum:
     # I think that when returning it should override "stop" values. Will follow on that.
     def _save_full_vacuum_report(self):
         status_report = {
-            "battery_level": float(self.vacbot.battery_status) * 100,
+            "battery_level": int(float(self.vacbot.battery_status) * 100),
             "state": self.vacbot.vacuum_status,
             "fan_speed": self.vacbot.fan_speed,
         }
