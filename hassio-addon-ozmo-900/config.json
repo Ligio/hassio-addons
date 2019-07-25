@@ -23,7 +23,10 @@
         "password": "",
         "command_topic": "/ecovacs-vacuum/command",
         "send_command_topic": "/ecovacs-vacuum/custom-command",
-        "state_topic": "/ecovacs-vacuum/state"
+        "state_topic": "/ecovacs-vacuum/state",
+        "set_fan_speed_topic": "/ecovacs-vacuum/set-fan-speed",
+        "json_attributes_topic": "/ecovacs-vacuum/state-attributes",
+        "error_topic": "/ecovacs-vacuum/errors"
     }
   },
   "schema": {
@@ -43,7 +46,10 @@
         "password": "str",
         "command_topic": "str",
         "send_command_topic": "str",
-        "state_topic": "str"
+        "state_topic": "str",
+        "set_fan_speed_topic": "str",
+        "json_attributes_topic": "str",
+        "error_topic": "str"
     }
   }
 }
