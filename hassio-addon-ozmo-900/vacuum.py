@@ -4,6 +4,7 @@
 from sucks import *
 import paho.mqtt.client as paho
 import json
+import logging
 
 
 class DeebotMQTTClient:
@@ -20,7 +21,7 @@ class DeebotMQTTClient:
         self.mqtt_client = paho.Client(mqtt_config["client_id"])
         self.mqtt_client.on_connect = self._on_connect
 
-        print("connecting to broker ", mqtt_config["broker_host"] + ":" + str(mqtt_config["broker_port"]))
+        logging.info("connecting to broker ", mqtt_config["broker_host"] + ":" + str(mqtt_config["broker_port"]))
         if mqtt_config["username"] != "" and mqtt_config["password"] != "":
             self.mqtt_client.username_pw_set(mqtt_config["username"], mqtt_config["password"])
 
