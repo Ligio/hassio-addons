@@ -18,14 +18,15 @@ class DeebotMQTTClient:
         self._error_topic = mqtt_config["error_topic"]
         self._availability_topic = mqtt_config["availability_topic"]
 
-        self.mqtt_client = paho.Client(mqtt_config["client_id"])
+        self.mqtt_client = paho.Client()
         self.mqtt_client.on_connect = self._on_connect
+
+        self._broker_host = mqtt_config["broker_host"]
+        self._broker_port = int(mqtt_config["broker_port"])
 
         logging.info("connecting to broker ", mqtt_config["broker_host"] + ":" + str(mqtt_config["broker_port"]))
         if mqtt_config["username"] != "" and mqtt_config["password"] != "":
             self.mqtt_client.username_pw_set(mqtt_config["username"], mqtt_config["password"])
-
-        self.mqtt_client.connect(mqtt_config["broker_host"], port=int(mqtt_config["broker_port"]))
 
     def get_command_topic(self):
         return self._command_topic
@@ -52,6 +53,11 @@ class DeebotMQTTClient:
         self.mqtt_client.publish(topic, json.dumps(message))
 
     def loop_forever(self):
+        self.mqtt_client.connect(self._broker_host, self._broker_port, 60)
+
+        while not self._connected:
+            time.sleep(1)
+
         self.mqtt_client.loop_forever()
 
     def _on_connect(self, client, obj, flags, rc):
@@ -83,6 +89,7 @@ class DeebotVacuum:
 
     def _mqtt_on_message_callback(self, client, userdata, message):
         payload = message.payload.decode("utf-8").strip()
+        print("Message received: ", payload) 
 
         if message.topic == self.mqtt_client.get_command_topic():
             if (payload == "turn_on" or payload == "start"):
