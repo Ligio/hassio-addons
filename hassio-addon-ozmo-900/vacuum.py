@@ -5,6 +5,8 @@ from sucks import *
 import paho.mqtt.client as paho
 import json
 import pprint
+import random
+import string
 
 
 class DeebotMQTTClient:
@@ -20,7 +22,8 @@ class DeebotMQTTClient:
         self._error_topic = mqtt_config["error_topic"]
         self._availability_topic = mqtt_config["availability_topic"]
 
-        self.mqtt_client = paho.Client()
+        random_id = ''.join(random.choice(string.ascii_lowercase) for x in range(6))
+        self.mqtt_client = paho.Client("ecovacs-vacuum-" + random_id)
         self.mqtt_client.on_connect = self._on_connect
         self.mqtt_client.on_message = self._on_message
 
