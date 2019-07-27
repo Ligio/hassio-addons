@@ -55,11 +55,14 @@ class DeebotMQTTClient:
         self.mqtt_client.publish(topic, json.dumps(message))
 
     def loop_forever(self):
+        print("Connecting to broker: ", self._broker_host + ":" + str(self._broker_port))
         self.mqtt_client.connect(self._broker_host, self._broker_port, 60)
 
         while not self._connected:
+            print("waiting to be connected...")
             time.sleep(1)
 
+        print("Connection OK. Now waiting for requests...")
         self.mqtt_client.loop_forever()
 
     def _on_connect(self, client, obj, flags, rc):
@@ -82,11 +85,9 @@ class DeebotVacuum:
     def __init__(self, config, mqtt_client):
         self.mqtt_client = mqtt_client
         self.vacbot = self._connect_to_deebot(config)
-        self._subscribe_events()
         self.mqtt_client.on_message = self._mqtt_on_message_callback
 
     def wait_for_requests(self):
-        print("Ready to receive requests...")
         self.mqtt_client.loop_forever()
 
     def _mqtt_on_message_callback(self, client, userdata, message):
@@ -115,6 +116,8 @@ class DeebotVacuum:
 
         my_vac = api.devices()[0]
         vacbot = VacBot(api.uid, api.REALM, api.resource, api.user_access_token, my_vac, config['continent'], monitor=True, verify_ssl=config['verify_ssl'])
+        self._subscribe_events()
+
         vacbot.connect_and_wait_until_ready()
 
         return vacbot

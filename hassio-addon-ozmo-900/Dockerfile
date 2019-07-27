@@ -19,4 +19,5 @@ WORKDIR /data
 
 RUN chmod a+x /vacuum.py
 
-CMD [ "/vacuum.py" ]
+# CMD [ "/vacuum.py" ]
+CMD [ "/run.sh" ]
