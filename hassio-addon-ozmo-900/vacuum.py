@@ -200,6 +200,9 @@ class DeebotMQTTClient:
         elif message.topic == self.get_fan_speed_topic():
             self.vacbot.run(Clean(speed=payload))
 
+        elif message.topic == self.get_send_command_topic():
+            self.vacbot.run(SpotArea(area=payload))
+
     def _on_connect(self, client, obj, flags, rc):
         if rc == 0:
             print("Connected to broker")
@@ -208,6 +211,8 @@ class DeebotMQTTClient:
             self.mqtt_client.subscribe(self.get_command_topic())
             print("OnConnect: subscribing to ", self.get_fan_speed_topic())
             self.mqtt_client.subscribe(self.get_fan_speed_topic())
+            print("OnConnect: subscribing to ", self.get_send_command_topic())
+            self.mqtt_client.subscribe(self.get_send_command_topic())
         else:
             print("Connection failed")
 
