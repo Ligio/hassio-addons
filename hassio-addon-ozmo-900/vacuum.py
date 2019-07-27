@@ -68,7 +68,7 @@ class DeebotMQTTClient:
         return self._availability_topic
 
     def publish(self, topic, message):
-        self.mqtt_client.publish(topic, json.dumps(message), qos=2, retain=True)
+        self.mqtt_client.publish(topic, json.dumps(message), qos=1, retain=True)
 
     def _connect_to_deebot(self, config):
         api = EcoVacsAPI(config['device_id'], config['email'], config['password_hash'], config['country'], config['continent'])
@@ -102,8 +102,6 @@ class DeebotMQTTClient:
 
     # Callback function for battery events
     def _status_report(self, status):
-        print("Updating status: " + str(status))
-
         # State has to be one of vacuum states supported by Home Assistant:
         ha_vacuum_supported_statuses = [
             "cleaning", "docked", "paused", "idle", "returning", "error"
@@ -119,7 +117,7 @@ class DeebotMQTTClient:
             elif status == "auto":
                 status = "cleaning"
             elif status == "stop":
-                status = "paused"
+                status = "idle"
             else:
                 print("Unknow HA status: ", status)
 
@@ -128,14 +126,19 @@ class DeebotMQTTClient:
             "state": str(status),
             "fan_speed": self.vacbot.fan_speed,
         }
+
+        print("Updating status: " + str(status))
+
         self.publish(self.get_state_topic(), status_report)
         self._publish_availability()
         pprint.pprint(vars(self.vacbot))
 
     def _publish_availability(self):
         if self.vacbot.vacuum_status != "offline":
+            print("Updating availability: online")
             self.publish(self.get_availability_topic(), "online")
         else:
+            print("Updating availability: offline")
             self.publish(self.get_availability_topic(), "offline")
 
     # Callback function for lifespan (components) events

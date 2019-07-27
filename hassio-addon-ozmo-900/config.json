@@ -1,6 +1,6 @@
 {
   "name": "Vacuum: Ecovacs Deebot OZMO 900",
-  "version": "0.12",
+  "version": "0.13",
   "slug": "vacuum-ecovacs-deebot-ozmo-900",
   "description": "Ecovacs Deebot OZMO 900 vacuum add-on!",
   "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
