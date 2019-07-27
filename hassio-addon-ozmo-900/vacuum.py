@@ -54,7 +54,7 @@ class DeebotMQTTClient:
     def publish(self, topic, message):
         self.mqtt_client.publish(topic, json.dumps(message))
 
-    def loop_forever(self):
+    def connect(self):
         print("Connecting to broker: ", self._broker_host + ":" + str(self._broker_port))
         self.mqtt_client.connect(self._broker_host, self._broker_port, 60)
 
@@ -62,19 +62,22 @@ class DeebotMQTTClient:
             print("waiting to be connected...")
             time.sleep(1)
 
-        print("Connection OK. Now waiting for requests...")
+        print("Connection OK!")
+
+    def loop_forever(self):
+        print("Waiting for requests...")
         self.mqtt_client.loop_forever()
 
     def _on_connect(self, client, obj, flags, rc):
         if rc == 0:
             print("Connected to broker")
-            self._connected = True  
+            self._connected = True
             print("OnConnect: subscribing to ", self._command_topic)
             self.mqtt_client.subscribe(self._command_topic)
         else:
             print("Connection failed")
 
-    def __del__(self): 
+    def __del__(self):
         print('Destructor called! Unsubscribing from MQTT topic.')
         self.mqtt_client.disconnect()
         self.mqtt_client.loop_stop()
@@ -84,8 +87,9 @@ class DeebotVacuum:
 
     def __init__(self, config, mqtt_client):
         self.mqtt_client = mqtt_client
-        self.vacbot = self._connect_to_deebot(config)
         self.mqtt_client.on_message = self._mqtt_on_message_callback
+        self.mqtt_client.connect()
+        self.vacbot = self._connect_to_deebot(config)
 
     def wait_for_requests(self):
         self.mqtt_client.loop_forever()
