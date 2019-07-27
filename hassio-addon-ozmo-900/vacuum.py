@@ -4,12 +4,12 @@
 from sucks import *
 import paho.mqtt.client as paho
 import json
-import logging
+import pprint
 
 
 class DeebotMQTTClient:
 
-    def __init__(self, mqtt_config):
+    def __init__(self, mqtt_config, ecovacs_config):
         self._connected = False
 
         self._command_topic = mqtt_config["command_topic"]
@@ -22,13 +22,29 @@ class DeebotMQTTClient:
 
         self.mqtt_client = paho.Client()
         self.mqtt_client.on_connect = self._on_connect
+        self.mqtt_client.on_message = self._on_message
 
         self._broker_host = mqtt_config["broker_host"]
         self._broker_port = int(mqtt_config["broker_port"])
 
-        logging.info("connecting to broker ", mqtt_config["broker_host"] + ":" + str(mqtt_config["broker_port"]))
         if mqtt_config["username"] != "" and mqtt_config["password"] != "":
             self.mqtt_client.username_pw_set(mqtt_config["username"], mqtt_config["password"])
+
+        print("Connecting to broker: ", self._broker_host + ":" + str(self._broker_port))
+        self.mqtt_client.connect(self._broker_host, self._broker_port, 60)
+
+        print("Starting the loop... ")
+        self.mqtt_client.loop_start()
+
+        while self._connected != True:
+            print("waiting to be connected to mqtt broker")
+            time.sleep(0.1)
+
+        self._connect_to_deebot(ecovacs_config)
+
+        while True:
+            time.sleep(1)
+
 
     def get_command_topic(self):
         return self._command_topic
@@ -52,79 +68,16 @@ class DeebotMQTTClient:
         return self._availability_topic
 
     def publish(self, topic, message):
-        self.mqtt_client.publish(topic, json.dumps(message))
-
-    def connect(self):
-        print("Connecting to broker: ", self._broker_host + ":" + str(self._broker_port))
-        self.mqtt_client.connect(self._broker_host, self._broker_port, 60)
-
-        while not self._connected:
-            print("waiting to be connected...")
-            time.sleep(1)
-
-        print("Connection OK!")
-
-    def loop_forever(self):
-        print("Waiting for requests...")
-        self.mqtt_client.loop_forever()
-
-    def _on_connect(self, client, obj, flags, rc):
-        if rc == 0:
-            print("Connected to broker")
-            self._connected = True
-            print("OnConnect: subscribing to ", self._command_topic)
-            self.mqtt_client.subscribe(self._command_topic)
-        else:
-            print("Connection failed")
-
-    def __del__(self):
-        print('Destructor called! Unsubscribing from MQTT topic.')
-        self.mqtt_client.disconnect()
-        self.mqtt_client.loop_stop()
-
-
-class DeebotVacuum:
-
-    def __init__(self, config, mqtt_client):
-        self.mqtt_client = mqtt_client
-        self.mqtt_client.on_message = self._mqtt_on_message_callback
-        self.mqtt_client.connect()
-        self.vacbot = self._connect_to_deebot(config)
-
-    def wait_for_requests(self):
-        self.mqtt_client.loop_forever()
-
-    def _mqtt_on_message_callback(self, client, userdata, message):
-        payload = message.payload.decode("utf-8").strip()
-        print("Message received: ", payload) 
-
-        if message.topic == self.mqtt_client.get_command_topic():
-            if (payload == "turn_on" or payload == "start"):
-                print("Clean started...")
-                #self.vacbot.run(Clean())
-            elif(payload == "return_to_base" or payload == "return_home"):
-                print("Return to base")
-                #self.vacbot.run(Charge())
-            elif(payload == "locate"):
-                print("Locate robot")
-                #self.vacbot.run(PlaySound())
-            elif(payload == "stop"):
-                print("Stop robot")
-                #self.vacbot.run(Stop())
-            elif(payload == "clean_spot"):
-                print("Clean spot")
-                #self.vacbot.run(Spot())
+        self.mqtt_client.publish(topic, json.dumps(message), qos=2, retain=True)
 
     def _connect_to_deebot(self, config):
         api = EcoVacsAPI(config['device_id'], config['email'], config['password_hash'], config['country'], config['continent'])
 
         my_vac = api.devices()[0]
-        vacbot = VacBot(api.uid, api.REALM, api.resource, api.user_access_token, my_vac, config['continent'], monitor=True, verify_ssl=config['verify_ssl'])
+        self.vacbot = VacBot(api.uid, api.REALM, api.resource, api.user_access_token, my_vac, config['continent'], monitor=True, verify_ssl=config['verify_ssl'])
         self._subscribe_events()
 
-        vacbot.connect_and_wait_until_ready()
-
-        return vacbot
+        self.vacbot.connect_and_wait_until_ready()
 
     def _subscribe_events(self):
         # Subscribe to the all event emitters
@@ -145,31 +98,45 @@ class DeebotVacuum:
             "state": self.vacbot.vacuum_status,
             "fan_speed": self.vacbot.fan_speed,
         }
-        self.mqtt_client.publish(self.mqtt_client.get_state_topic(), status_report)
+        self.publish(self.get_state_topic(), status_report)
 
     # Callback function for battery events
     def _status_report(self, status):
         print("Updating status: " + str(status))
 
         # State has to be one of vacuum states supported by Home Assistant:
-        #
-        #     cleaning,
-        #     docked,
-        #     paused,
-        #     idle,
-        #     returning,
-        #     error.
+        ha_vacuum_supported_statuses = [
+            "cleaning", "docked", "paused", "idle", "returning", "error"
+        ]
 
         battery_level = "0"
         if self.vacbot.battery_status != None:
             battery_level = str(float(self.vacbot.battery_status) * 100)
+
+        if status not in ha_vacuum_supported_statuses:
+            if status == "charging":
+                status = "docked"
+            elif status == "auto":
+                status = "cleaning"
+            elif status == "stop":
+                status = "paused"
+            else:
+                print("Unknow HA status: ", status)
 
         status_report = {
             "battery_level": int(battery_level),
             "state": str(status),
             "fan_speed": self.vacbot.fan_speed,
         }
-        self.mqtt_client.publish(self.mqtt_client.get_state_topic(), status_report)
+        self.publish(self.get_state_topic(), status_report)
+        self._publish_availability()
+        pprint.pprint(vars(self.vacbot))
+
+    def _publish_availability(self):
+        if self.vacbot.vacuum_status != "offline":
+            self.publish(self.get_availability_topic(), "online")
+        else:
+            self.publish(self.get_availability_topic(), "offline")
 
     # Callback function for lifespan (components) events
     def _lifespan_report(self, lifespan):
@@ -187,7 +154,7 @@ class DeebotVacuum:
             else:
                 attributes_status[component_type] = str(int(self.vacbot.components[component_type] * 100))
 
-        self.mqtt_client.publish(self.mqtt_client.get_attribute_topic(), attributes_status)
+        self.publish(self.get_attribute_topic(), attributes_status)
         print("Attributes: " + json.dumps(attributes_status))
 
     # Callback function for error events
@@ -196,38 +163,57 @@ class DeebotVacuum:
         error_str = str(error)
         print("Error: " + error_str)
 
-        self.mqtt_client.publish(self.mqtt_client.get_error_topic(), error_str)
+        self.publish(self.get_error_topic(), error_str)
 
-    # Library generated summary status. Smart merge of clean and battery status
-    # I think that when returning it should override "stop" values. Will follow on that.
-    def _save_full_vacuum_report(self):
-        status_report = {
-            "battery_level": int(float(self.vacbot.battery_status) * 100),
-            "state": self.vacbot.vacuum_status,
-            "fan_speed": self.vacbot.fan_speed,
-        }
+    def _on_message(self, client, userdata, message):
+        payload = message.payload.decode("utf-8").strip()
+        print("Message received: ", payload)
 
-        self.mqtt_client.publish(self.mqtt_client.get_state_topic(), status_report)
+        pprint.pprint(vars(self.vacbot))
 
-        attributes_status = {
-            "clean_status": self.vacbot.clean_status,
-            "charge_status": self.vacbot.charge_status
-        }
+        if message.topic == self.get_command_topic():
+            if (payload == "turn_on" or payload == "start"):
+                print("Clean started...")
+                self.vacbot.run(Clean())
+            elif(payload == "pause"):
+                print("Pause robot")
+                self.vacbot.run(Stop())
+            elif(payload == "stop"):
+                print("Clean edge robot")
+                self.vacbot.run(Edge())
+            elif(payload == "return_to_base" or payload == "return_home"):
+                print("Return to base")
+                self.vacbot.run(Charge())
+            elif(payload == "locate"):
+                print("Locate robot")
+                self.vacbot.run(PlaySound())
+            elif(payload == "clean_spot"):
+                print("Clean spot")
+                self.vacbot.run(Spot())
 
-        for component_type in self.vacbot.components.keys():
-            attributes_status[component_type] = self.vacbot.components[component_type]
+        elif message.topic == self.get_fan_speed_topic():
+            self.vacbot.run(Clean(speed=payload))
 
-        self.mqtt_client.publish(self.mqtt_client.get_attributes_topic(), attributes_status)
+    def _on_connect(self, client, obj, flags, rc):
+        if rc == 0:
+            print("Connected to broker")
+            self._connected = True
+            print("OnConnect: subscribing to ", self.get_command_topic())
+            self.mqtt_client.subscribe(self.get_command_topic())
+            print("OnConnect: subscribing to ", self.get_fan_speed_topic())
+            self.mqtt_client.subscribe(self.get_fan_speed_topic())
+        else:
+            print("Connection failed")
 
     def __del__(self):
-        print('Destructor called for Vacuum!')
-        del self.mqtt_client
+        print('Destructor called! Unsubscribing from MQTT topic.')
+        self.mqtt_client.disconnect()
+        self.mqtt_client.loop_stop()
+
 
 if __name__ == "__main__":
     options_path = "/data/options.json"
     with open(options_path, encoding='utf-8') as options_file:
         config = json.load(options_file)
 
-    mqtt_client = DeebotMQTTClient(config['mqtt'])
-    DeebotVacuum(config['ecovacs'], mqtt_client)\
-        .wait_for_requests()
+    DeebotMQTTClient(config['mqtt'], config['ecovacs'])
