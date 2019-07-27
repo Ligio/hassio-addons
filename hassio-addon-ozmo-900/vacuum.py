@@ -10,6 +10,8 @@ import logging
 class DeebotMQTTClient:
 
     def __init__(self, mqtt_config):
+        self._connected = False
+
         self._command_topic = mqtt_config["command_topic"]
         self._send_command_topic = mqtt_config["send_command_topic"]
         self._state_topic = mqtt_config["state_topic"]
@@ -94,19 +96,19 @@ class DeebotVacuum:
         if message.topic == self.mqtt_client.get_command_topic():
             if (payload == "turn_on" or payload == "start"):
                 print("Clean started...")
-                self.vacbot.run(Clean())
+                #self.vacbot.run(Clean())
             elif(payload == "return_to_base" or payload == "return_home"):
                 print("Return to base")
-                self.vacbot.run(Charge())
+                #self.vacbot.run(Charge())
             elif(payload == "locate"):
                 print("Locate robot")
-                self.vacbot.run(PlaySound())
+                #self.vacbot.run(PlaySound())
             elif(payload == "stop"):
                 print("Stop robot")
-                self.vacbot.run(Stop())
+                #self.vacbot.run(Stop())
             elif(payload == "clean_spot"):
                 print("Clean spot")
-                self.vacbot.run(Spot())
+                #self.vacbot.run(Spot())
 
     def _connect_to_deebot(self, config):
         api = EcoVacsAPI(config['device_id'], config['email'], config['password_hash'], config['country'], config['continent'])
