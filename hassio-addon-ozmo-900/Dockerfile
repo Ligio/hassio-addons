@@ -3,7 +3,7 @@ FROM $BUILD_FROM
 
 ENV LANG C.UTF-8
 COPY sucks /
-RUN cd /sucks 
+RUN cd /sucks
 
 RUN apk add --no-cache python3 gcc build-base  && \
 	python3 -m ensurepip --upgrade && \
@@ -19,5 +19,6 @@ WORKDIR /data
 
 RUN chmod a+x /vacuum.py
 
+COPY run.sh /
 # CMD [ "/vacuum.py" ]
 CMD [ "/run.sh" ]
