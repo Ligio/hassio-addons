@@ -92,7 +92,7 @@ class DeebotMQTTClient:
     # Callback function for battery events
     def _battery_report(self, level):
         status_report = {
-            "battery_level": int(level * 100),
+            "battery_level": int(float(level) * 100),
             "state": self.vacbot.vacuum_status,
             "fan_speed": self.vacbot.fan_speed,
         }
@@ -124,7 +124,7 @@ class DeebotMQTTClient:
                 print("Unknow HA status: ", status)
 
         status_report = {
-            "battery_level": int(battery_level),
+            "battery_level": int(float(battery_level)),
             "state": str(status),
             "fan_speed": self.vacbot.fan_speed,
         }
