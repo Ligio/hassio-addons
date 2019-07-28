@@ -97,6 +97,8 @@ class DeebotMQTTClient:
             "fan_speed": self.vacbot.fan_speed,
         }
         self.publish(self.get_state_topic(), status_report)
+        self.vacbot.run(GetCleanState())
+        self.vacbot.run(GetChargeState())
 
     # Callback function for battery events
     def _status_report(self, status):
