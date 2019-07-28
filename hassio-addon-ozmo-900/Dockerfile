@@ -19,6 +19,4 @@ WORKDIR /data
 
 RUN chmod a+x /vacuum.py
 
-CMD [ "/vacuum.py" ]
-#COPY run.sh /
-#CMD [ "/run.sh" ]
+CMD [ "python3", "-u", "/vacuum.py" ]
