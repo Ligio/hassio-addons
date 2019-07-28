@@ -71,7 +71,8 @@ class DeebotMQTTClient:
         return self._availability_topic
 
     def publish(self, topic, message):
-        self.mqtt_client.publish(topic, json.dumps(message), qos=2)
+        # retain=True, so if HA restarts, it can read the last vacuum status
+        self.mqtt_client.publish(topic, json.dumps(message), qos=2, retain=True)
 
     def _connect_to_deebot(self, config):
         api = EcoVacsAPI(config['device_id'], config['email'], config['password_hash'], config['country'], config['continent'])
