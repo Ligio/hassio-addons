@@ -71,7 +71,7 @@ class DeebotMQTTClient:
         return self._availability_topic
 
     def publish(self, topic, message):
-        self.mqtt_client.publish(topic, json.dumps(message))
+        self.mqtt_client.publish(topic, json.dumps(message), qos=2)
 
     def _connect_to_deebot(self, config):
         api = EcoVacsAPI(config['device_id'], config['email'], config['password_hash'], config['country'], config['continent'])
@@ -185,8 +185,8 @@ class DeebotMQTTClient:
                 print("Pause robot")
                 self.vacbot.run(Stop())
             elif(payload == "stop"):
-                print("Clean edge robot")
-                self.vacbot.run(Edge())
+                print("Stop robot")
+                self.vacbot.run(Stop())
             elif(payload == "return_to_base" or payload == "return_home"):
                 print("Return to base")
                 self.vacbot.run(Charge())
@@ -196,12 +196,18 @@ class DeebotMQTTClient:
             elif(payload == "clean_spot"):
                 print("Clean spot")
                 self.vacbot.run(Spot())
+            elif(payload == "edge"):
+                print("Clean edge")
+                self.vacbot.run(Edge())
 
         elif message.topic == self.get_fan_speed_topic():
             self.vacbot.run(Clean(speed=payload))
 
         elif message.topic == self.get_send_command_topic():
-            self.vacbot.run(SpotArea(area=payload))
+            if payload == "":
+                self.vacbot.run(Clean())
+            else:
+                self.vacbot.run(SpotArea(area=payload))
 
     def _on_connect(self, client, obj, flags, rc):
         if rc == 0:
