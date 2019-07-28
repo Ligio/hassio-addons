@@ -4,7 +4,6 @@
 from sucks import *
 import paho.mqtt.client as paho
 import json
-import pprint
 import random
 import string
 
@@ -90,13 +89,8 @@ class DeebotMQTTClient:
         self.vacbot.lifespanEvents.subscribe(self._lifespan_report)
         self.vacbot.errorEvents.subscribe(self._error_report)
 
-        # For the first run, try to get & report all statuses
-        # self.vacbot.request_all_statuses()
-
     # Callback function for battery events
     def _battery_report(self, level):
-        print("Updating battery level: " + str(level * 100))
-
         status_report = {
             "battery_level": int(level * 100),
             "state": self.vacbot.vacuum_status,
@@ -118,10 +112,12 @@ class DeebotMQTTClient:
         if status not in ha_vacuum_supported_statuses:
             if status == "charging":
                 status = "docked"
-            elif status == "auto":
+            elif status == "auto" or status == "spot_area":
                 status = "cleaning"
             elif status == "stop":
                 status = "idle"
+            elif status == "pause":
+                status = "paused"
             else:
                 print("Unknow HA status: ", status)
 
@@ -135,7 +131,6 @@ class DeebotMQTTClient:
 
         self.publish(self.get_state_topic(), status_report)
         self._publish_availability()
-        pprint.pprint(vars(self.vacbot))
 
     def _publish_availability(self):
         if self.vacbot.vacuum_status != "offline":
@@ -175,8 +170,6 @@ class DeebotMQTTClient:
     def _on_message(self, client, userdata, message):
         payload = message.payload.decode("utf-8").strip()
         print("Message received: ", payload)
-
-        pprint.pprint(vars(self.vacbot))
 
         if message.topic == self.get_command_topic():
             if (payload == "turn_on" or payload == "start"):
