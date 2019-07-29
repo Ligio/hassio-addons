@@ -9,7 +9,7 @@ import string
 import sys
 
 import logging
-logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S', stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S', stream=sys.stdout, level=logging.INFO)
 
 
 class DeebotMQTTClient:
