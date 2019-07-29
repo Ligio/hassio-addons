@@ -118,28 +118,28 @@ class DeebotMQTTClient:
         self._publish_ha_state_report(state_report)
         self._publish_availability()
 
-    def _publish_ha_state_report(self, status_report):
+    def _publish_ha_state_report(self, state_report):
         # State has to be one of vacuum states supported by Home Assistant:
         ha_vacuum_supported_statuses = [
             "cleaning", "docked", "paused", "idle", "returning", "error"
         ]
 
-        status = status_report['status']
+        state = state_report['state']
 
-        if status not in ha_vacuum_supported_statuses:
-            if status == "charging":
-                status_report['status'] = "docked"
-            elif status == "auto" or status == "spot_area":
-                status_report['status'] = "cleaning"
-            elif status == "stop":
-                status_report['status'] = "idle"
-            elif status == "pause":
-                status_report['status'] = "paused"
+        if state not in ha_vacuum_supported_statuses:
+            if state == "charging":
+                state_report['state'] = "docked"
+            elif state == "auto" or state == "spot_area":
+                state_report['state'] = "cleaning"
+            elif state == "stop":
+                state_report['state'] = "idle"
+            elif state == "pause":
+                state_report['state'] = "paused"
             else:
-                logging.info("Unknow HA status: " + status)
+                logging.info("Unknow HA status: " + state)
 
-        logging.info("Updating status topic: " + str(status_report))
-        self.publish(self.get_state_topic(), status_report)
+        logging.info("Updating status topic: " + str(state_report))
+        self.publish(self.get_state_topic(), state_report)
 
     def _publish_availability(self):
         if self.vacbot.vacuum_status != "offline":
