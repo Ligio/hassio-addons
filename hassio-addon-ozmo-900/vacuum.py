@@ -95,48 +95,51 @@ class DeebotMQTTClient:
 
     # Callback function for battery events
     def _battery_report(self, level):
-        status_report = {
+        state_report = {
             "battery_level": int(float(level) * 100),
             "state": self.vacbot.vacuum_status,
             "fan_speed": self.vacbot.fan_speed,
         }
-        self.publish(self.get_state_topic(), status_report)
-        self.vacbot.run(GetCleanState())
-        self.vacbot.run(GetChargeState())
+
+        self._publish_ha_state_report(state_report)
 
     # Callback function for battery events
     def _status_report(self, status):
-        # State has to be one of vacuum states supported by Home Assistant:
-        ha_vacuum_supported_statuses = [
-            "cleaning", "docked", "paused", "idle", "returning", "error"
-        ]
-
         battery_level = "0"
         if self.vacbot.battery_status != None:
             battery_level = str(float(self.vacbot.battery_status) * 100)
 
-        if status not in ha_vacuum_supported_statuses:
-            if status == "charging":
-                status = "docked"
-            elif status == "auto" or status == "spot_area":
-                status = "cleaning"
-            elif status == "stop":
-                status = "idle"
-            elif status == "pause":
-                status = "paused"
-            else:
-                logging.info("Unknow HA status: " + status)
-
-        status_report = {
+        state_report = {
             "battery_level": int(float(battery_level)),
             "state": str(status),
             "fan_speed": self.vacbot.fan_speed,
         }
 
-        logging.info("Updating status: " + str(status))
-
-        self.publish(self.get_state_topic(), status_report)
+        self._publish_ha_state_report(state_report)
         self._publish_availability()
+
+    def _publish_ha_state_report(self, status_report):
+        # State has to be one of vacuum states supported by Home Assistant:
+        ha_vacuum_supported_statuses = [
+            "cleaning", "docked", "paused", "idle", "returning", "error"
+        ]
+
+        status = status_report['status']
+
+        if status not in ha_vacuum_supported_statuses:
+            if status == "charging":
+                status_report['status'] = "docked"
+            elif status == "auto" or status == "spot_area":
+                status_report['status'] = "cleaning"
+            elif status == "stop":
+                status_report['status'] = "idle"
+            elif status == "pause":
+                status_report['status'] = "paused"
+            else:
+                logging.info("Unknow HA status: " + status)
+
+        logging.info("Updating status topic: " + str(status_report))
+        self.publish(self.get_state_topic(), status_report)
 
     def _publish_availability(self):
         if self.vacbot.vacuum_status != "offline":
