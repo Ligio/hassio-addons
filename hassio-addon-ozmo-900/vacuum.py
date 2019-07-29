@@ -36,7 +36,7 @@ class DeebotMQTTClient:
         if mqtt_config["username"] != "" and mqtt_config["password"] != "":
             self.mqtt_client.username_pw_set(mqtt_config["username"], mqtt_config["password"])
 
-        logging.info("Connecting to broker: ", self._broker_host + ":" + str(self._broker_port))
+        logging.info("Connecting to broker: " + self._broker_host + ":" + str(self._broker_port))
         self.mqtt_client.connect(self._broker_host, self._broker_port, 60)
 
         logging.info("Starting the loop... ")
@@ -125,7 +125,7 @@ class DeebotMQTTClient:
             elif status == "pause":
                 status = "paused"
             else:
-                logging.info("Unknow HA status: ", status)
+                logging.info("Unknow HA status: " + status)
 
         status_report = {
             "battery_level": int(float(battery_level)),
@@ -175,7 +175,7 @@ class DeebotMQTTClient:
 
     def _on_message(self, client, userdata, message):
         payload = message.payload.decode("utf-8").strip()
-        logging.info("Message received: ", payload)
+        logging.info("Message received: " + payload)
 
         if message.topic == self.get_command_topic():
             if (payload == "turn_on" or payload == "start"):
@@ -218,11 +218,11 @@ class DeebotMQTTClient:
         if rc == 0:
             logging.info("Connected to broker")
             self._connected = True
-            logging.info("OnConnect: subscribing to ", self.get_command_topic())
+            logging.info("OnConnect: subscribing to " + self.get_command_topic())
             self.mqtt_client.subscribe(self.get_command_topic())
-            logging.info("OnConnect: subscribing to ", self.get_fan_speed_topic())
+            logging.info("OnConnect: subscribing to " + self.get_fan_speed_topic())
             self.mqtt_client.subscribe(self.get_fan_speed_topic())
-            logging.info("OnConnect: subscribing to ", self.get_send_command_topic())
+            logging.info("OnConnect: subscribing to " + self.get_send_command_topic())
             self.mqtt_client.subscribe(self.get_send_command_topic())
         else:
             logging.info("Connection failed")
