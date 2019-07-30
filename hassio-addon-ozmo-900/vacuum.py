@@ -27,6 +27,7 @@ class DeebotMQTTClient:
         random_id = ''.join(random.choice(string.ascii_lowercase) for x in range(6))
         self.mqtt_client = paho.Client(client_id="ecovacs-vacuum-mqtt-" + random_id)
         self.mqtt_client.on_connect = self._on_connect
+        self.mqtt_client.on_disconnect = self._on_disconnect
         self.mqtt_client.on_message = self._on_message
 
         self._broker_host = mqtt_config["broker_host"]
@@ -36,10 +37,10 @@ class DeebotMQTTClient:
             self.mqtt_client.username_pw_set(mqtt_config["username"], mqtt_config["password"])
 
         logging.info("Connecting to broker: " + self._broker_host + ":" + str(self._broker_port))
-        self.mqtt_client.connect(self._broker_host, self._broker_port, 60)
+        self.mqtt_client.connect(self._broker_host, self._broker_port, 600)
 
         # logging.info("Starting the loop... ")
-        # self.mqtt_client.loop_start()
+        self.mqtt_client.loop_start()
 
         while self._connected != True:
             logging.info("waiting to be connected to mqtt broker")
@@ -47,11 +48,8 @@ class DeebotMQTTClient:
 
         self._connect_to_deebot(ecovacs_config)
 
-        # while True:
-        #    time.sleep(1)
-
-        logging.info("Starting the loop... ")
-        self.mqtt_client.loop_forever(retry_first_connection=True)
+        while True:
+            time.sleep(1)
 
 
 
@@ -235,6 +233,10 @@ class DeebotMQTTClient:
             self.mqtt_client.subscribe(self.get_send_command_topic())
         else:
             logging.info("Connection failed")
+
+    def _on_disconnect(self, client, userdata, rc):
+        logging.warning("Disconnected from MQTT broker. Trying to reconnect")
+        self.mqtt_client.reconnect()
 
     def __del__(self):
         logging.info('Destructor called! Unsubscribing from MQTT topic.')
