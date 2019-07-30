@@ -4,8 +4,8 @@
 from sucks import *
 import paho.mqtt.client as paho
 import json
-# import random
-# import string
+import random
+import string
 import sys
 
 import logging
@@ -24,8 +24,8 @@ class DeebotMQTTClient:
         self._error_topic = mqtt_config["error_topic"]
         self._availability_topic = mqtt_config["availability_topic"]
 
-        # random_id = ''.join(random.choice(string.ascii_lowercase) for x in range(6))
-        self.mqtt_client = paho.Client(client_id="ecovacs-vacuum-mqtt-client", clean_session=False)
+        random_id = ''.join(random.choice(string.ascii_lowercase) for x in range(6))
+        self.mqtt_client = paho.Client(client_id="ecovacs-vacuum-mqtt-" + random_id)
         self.mqtt_client.on_connect = self._on_connect
         self.mqtt_client.on_message = self._on_message
 
@@ -38,8 +38,8 @@ class DeebotMQTTClient:
         logging.info("Connecting to broker: " + self._broker_host + ":" + str(self._broker_port))
         self.mqtt_client.connect(self._broker_host, self._broker_port, 60)
 
-        logging.info("Starting the loop... ")
-        self.mqtt_client.loop_start()
+        # logging.info("Starting the loop... ")
+        # self.mqtt_client.loop_start()
 
         while self._connected != True:
             logging.info("waiting to be connected to mqtt broker")
@@ -47,8 +47,12 @@ class DeebotMQTTClient:
 
         self._connect_to_deebot(ecovacs_config)
 
-        while True:
-            time.sleep(1)
+        # while True:
+        #    time.sleep(1)
+
+        logging.info("Starting the loop... ")
+        self.mqtt_client.loop_forever(retry_first_connection=True)
+
 
 
     def get_command_topic(self):
@@ -75,7 +79,7 @@ class DeebotMQTTClient:
     def publish(self, topic, message):
         # retain=True, so if HA restarts, it can read the last vacuum status
         logging.info("Publish message to topic " + topic + ": " + json.dumps(message))
-        self.mqtt_client.publish(topic, json.dumps(message), qos=2)
+        self.mqtt_client.publish(topic, json.dumps(message), qos=2, retain=True)
 
     def _connect_to_deebot(self, config):
         api = EcoVacsAPI(config['device_id'], config['email'], config['password_hash'], config['country'], config['continent'])
