@@ -9,7 +9,6 @@ import string
 import sys
 
 import logging
-logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S', stream=sys.stdout, level=logging.INFO)
 
 
 class DeebotMQTTClient:
@@ -75,6 +74,7 @@ class DeebotMQTTClient:
 
     def publish(self, topic, message):
         # retain=True, so if HA restarts, it can read the last vacuum status
+        self.mqtt_client.publish(topic, "", qos=2, retain=True)
         self.mqtt_client.publish(topic, json.dumps(message), qos=2, retain=True)
 
     def _connect_to_deebot(self, config):
@@ -240,5 +240,15 @@ if __name__ == "__main__":
     options_path = "/data/options.json"
     with open(options_path, encoding='utf-8') as options_file:
         config = json.load(options_file)
+
+    logging_level = logging.INFO
+    if 'log_level' in config:
+        levelnum = logging.getLevelName(config['log_level'].upper())
+        try:
+            logging_level = int(levelnum)
+        except ValueError:
+            logging_level = logging.INFO
+
+    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S', stream=sys.stdout, level=logging_level)
 
     DeebotMQTTClient(config['mqtt'], config['ecovacs'])

@@ -1,12 +1,13 @@
 {
   "name": "Vacuum: Ecovacs Deebot OZMO 900",
-  "version": "1.11",
+  "version": "1.12",
   "slug": "vacuum-ecovacs-deebot-ozmo-900",
   "description": "Ecovacs Deebot OZMO 900 vacuum add-on!",
   "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
   "startup": "before",
   "boot": "auto",
   "options": {
+    "log_level": "INFO",
     "ecovacs": {
         "email": "",
         "password_hash": "",
@@ -30,8 +31,9 @@
     }
   },
   "schema": {
+    "log_level": "str",
     "ecovacs": {
-	"email": "str",
+	    "email": "str",
         "password_hash": "str",
         "device_id": "str",
         "country": "str",
