@@ -4,8 +4,8 @@
 from sucks import *
 import paho.mqtt.client as paho
 import json
-import random
-import string
+# import random
+# import string
 import sys
 
 import logging
@@ -24,8 +24,8 @@ class DeebotMQTTClient:
         self._error_topic = mqtt_config["error_topic"]
         self._availability_topic = mqtt_config["availability_topic"]
 
-        random_id = ''.join(random.choice(string.ascii_lowercase) for x in range(6))
-        self.mqtt_client = paho.Client("ecovacs-vacuum-" + random_id)
+        # random_id = ''.join(random.choice(string.ascii_lowercase) for x in range(6))
+        self.mqtt_client = paho.Client(client_id="ecovacs-vacuum-mqtt-client", clean_session=False)
         self.mqtt_client.on_connect = self._on_connect
         self.mqtt_client.on_message = self._on_message
 
@@ -74,8 +74,7 @@ class DeebotMQTTClient:
 
     def publish(self, topic, message):
         # retain=True, so if HA restarts, it can read the last vacuum status
-        self.mqtt_client.publish(topic, "", qos=2, retain=True)
-        self.mqtt_client.publish(topic, json.dumps(message), qos=2, retain=True)
+        self.mqtt_client.publish(topic, json.dumps(message), qos=2)
 
     def _connect_to_deebot(self, config):
         api = EcoVacsAPI(config['device_id'], config['email'], config['password_hash'], config['country'], config['continent'])
