@@ -74,6 +74,7 @@ class DeebotMQTTClient:
 
     def publish(self, topic, message):
         # retain=True, so if HA restarts, it can read the last vacuum status
+        logging.info("Publish message to topic " + topic + ": " + json.dumps(message))
         self.mqtt_client.publish(topic, json.dumps(message), qos=2)
 
     def _connect_to_deebot(self, config):
@@ -207,8 +208,10 @@ class DeebotMQTTClient:
 
         elif message.topic == self.get_send_command_topic():
             if payload == "":
+                logging.info("Clean started for all home")
                 self.vacbot.run(Clean())
             else:
+                logging.info("Clean started for area: " + payload)
                 self.vacbot.run(SpotArea(area=payload))
 
         logging.info("Get clean and charge states")
