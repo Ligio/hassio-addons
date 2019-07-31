@@ -152,10 +152,10 @@ class DeebotMQTTClient:
 
     def _publish_availability(self):
         if self.vacbot.vacuum_status != "offline":
-            logging.info("Updating availability: online")
+            logging.debug("Updating availability: online")
             self.publish(self.get_availability_topic(), "online")
         else:
-            logging.info("Updating availability: offline")
+            logging.warning("Updating availability: offline")
             self.publish(self.get_availability_topic(), "offline")
 
     # Callback function for lifespan (components) events
@@ -192,41 +192,44 @@ class DeebotMQTTClient:
         if message.topic == self.get_command_topic():
             if (payload == "turn_on" or payload == "start"):
                 logging.info("Clean started...")
-                self.vacbot.run(Clean())
+                self._threaded_vacbot_run(Clean())
             elif(payload == "pause"):
                 logging.info("Pause robot")
-                self.vacbot.run(Stop())
+                self._threaded_vacbot_run(Stop())
             elif(payload == "stop"):
                 logging.info("Stop robot")
-                self.vacbot.run(Stop())
+                self._threaded_vacbot_run(Stop())
             elif(payload == "return_to_base" or payload == "return_home"):
                 logging.info("Return to base")
-                self.vacbot.run(Charge())
+                self._threaded_vacbot_run(Charge())
             elif(payload == "locate"):
                 logging.info("Locate robot")
-                self.vacbot.run(PlaySound())
+                self._threaded_vacbot_run(PlaySound())
             elif(payload == "clean_spot"):
                 logging.info("Clean spot")
-                self.vacbot.run(Spot())
+                self._threaded_vacbot_run(Spot())
             elif(payload == "edge"):
                 logging.info("Clean edge")
-                self.vacbot.run(Edge())
+                self._threaded_vacbot_run(Edge())
 
         elif message.topic == self.get_fan_speed_topic():
-            self.vacbot.run(Clean(speed=payload))
+            self._threaded_vacbot_run(Clean(speed=payload))
 
         elif message.topic == self.get_send_command_topic():
             if payload == "":
                 logging.info("Clean started for all home")
-                self.vacbot.run(Clean())
+                self._threaded_vacbot_run(Clean())
             else:
                 logging.info("Clean started for area: " + payload)
-                self.vacbot.run(SpotArea(area=payload))
+                self._threaded_vacbot_run(SpotArea(area=payload))
 
         logging.info("Get clean and charge states")
-        self.vacbot.run(GetCleanState())
-        self.vacbot.run(GetChargeState())
-
+        self._threaded_vacbot_run(GetCleanState())
+        self._threaded_vacbot_run(GetChargeState())
+        
+    def _threaded_vacbot_run(self, command):
+        x = threading.Thread(target=self.vacbot.run, args=(command,))
+        x.start()
 
     def _on_connect(self, client, obj, flags, rc):
         if rc == 0:
