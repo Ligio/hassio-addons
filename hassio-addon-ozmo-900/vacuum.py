@@ -37,7 +37,7 @@ class DeebotMQTTClient:
             self.mqtt_client.username_pw_set(mqtt_config["username"], mqtt_config["password"])
 
         logging.info("Connecting to broker: " + self._broker_host + ":" + str(self._broker_port))
-        self.mqtt_client.connect(self._broker_host, self._broker_port, 600)
+        self.mqtt_client.connect(self._broker_host, port=self._broker_port, keepalive=60)
 
         # logging.info("Starting the loop... ")
         self.mqtt_client.loop_start()
@@ -48,7 +48,14 @@ class DeebotMQTTClient:
 
         self._connect_to_deebot(ecovacs_config)
 
+        index = 0
         while True:
+            if index % 5 == 0:
+                self._publish_availability()
+            index = index + 1
+            if index > 1000:
+                index = 0
+
             time.sleep(1)
 
 
