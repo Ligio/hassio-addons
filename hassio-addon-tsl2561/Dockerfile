@@ -12,4 +12,4 @@ WORKDIR /data
 
 RUN chmod a+x /light_sensor.py
 
-CMD [ "/light_sensor.py" ]
+CMD [ "python3", "-u", "/light_sensor.py" ]
