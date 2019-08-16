@@ -50,10 +50,10 @@ class DeebotMQTTClient:
 
         index = 0
         while True:
-            if index % 5 == 0:
+            if index % 120 == 0:
                 self._publish_availability()
             index = index + 1
-            if index > 1000:
+            if index >= 1200:
                 index = 0
 
             time.sleep(1)
@@ -145,17 +145,25 @@ class DeebotMQTTClient:
             elif state == "pause":
                 state_report['state'] = "paused"
             else:
-                logging.info("Unknow HA status: " + state)
+                logging.warning("Unknow HA status: " + state)
 
-        logging.info("Updating status topic: " + str(state_report))
         self.publish(self.get_state_topic(), state_report)
+
+        attributes_status = {
+            "original_status": state,
+            "clean_status": self.vacbot.clean_status,
+            "charge_status": self.vacbot.charge_status
+        }
+
+        for component_type in self.vacbot.components.keys():
+            attributes_status[component_type] = str(int(self.vacbot.components[component_type] * 100))
+
+        self.publish(self.get_attribute_topic(), attributes_status)
 
     def _publish_availability(self):
         if self.vacbot.vacuum_status != "offline":
-            logging.debug("Updating availability: online")
             self.publish(self.get_availability_topic(), "online")
         else:
-            logging.warning("Updating availability: offline")
             self.publish(self.get_availability_topic(), "offline")
 
     # Callback function for lifespan (components) events
@@ -164,6 +172,7 @@ class DeebotMQTTClient:
         changed_value = str(int(100 * lifespan['lifespan']))
 
         attributes_status = {
+            "original_status": self.vacbot.vacuum_status,
             "clean_status": self.vacbot.clean_status,
             "charge_status": self.vacbot.charge_status
         }
@@ -175,7 +184,6 @@ class DeebotMQTTClient:
                 attributes_status[component_type] = str(int(self.vacbot.components[component_type] * 100))
 
         self.publish(self.get_attribute_topic(), attributes_status)
-        logging.info("Attributes: " + json.dumps(attributes_status))
 
     # Callback function for error events
     # THIS NEEDS A LOT OF WORK
