@@ -150,7 +150,7 @@ class DeebotMQTTClient:
         self.publish(self.get_state_topic(), state_report)
 
         attributes_status = {
-            "original_status": state,
+            "original_status": 'charging' if self.vacbot.charge_status == 'charging' else state,
             "clean_status": self.vacbot.clean_status,
             "charge_status": self.vacbot.charge_status
         }
@@ -172,7 +172,7 @@ class DeebotMQTTClient:
         changed_value = str(int(100 * lifespan['lifespan']))
 
         attributes_status = {
-            "original_status": self.vacbot.vacuum_status,
+            "original_status": 'charging' if self.vacbot.charge_status == 'charging' else self.vacbot.vacuum_status,
             "clean_status": self.vacbot.clean_status,
             "charge_status": self.vacbot.charge_status
         }
